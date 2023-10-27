@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.apprenticeproject.databinding.ActivityMainBinding
 import com.example.apprenticeproject.network.NetworkResult
+import com.example.apprenticeproject.network.responses.HiringResponse
 import com.example.apprenticeproject.ui.adapter.HeaderItem
 import com.example.apprenticeproject.ui.adapter.HiringAdapter
 import dagger.hilt.android.AndroidEntryPoint
@@ -40,28 +41,8 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 is NetworkResult.Success -> {
-                    result.data?.let { hiringResponses ->
-                        var filteredData = hiringResponses.filter { !it.name.isNullOrBlank() }
-                        filteredData =
-                            filteredData.sortedWith(
-                                compareBy(
-                                    { it.listId },
-                                    { it.name?.substringAfter("Item ")?.toInt() },
-//                                    { it.name }, // In case we want ordering in string format we can use this instead
-                                )
-                            )
-                        list.clear()
-                        for (index in filteredData.indices) {
-                            if (index == 0 ||
-                                filteredData.elementAt(index).listId != filteredData.elementAt(
-                                    index - 1
-                                ).listId
-                            ) {
-                                list.add(HeaderItem(filteredData[index].listId))
-                            }
-                            list.add(filteredData[index])
-                        }
-                        hiringAdapter.notifyDataSetChanged()
+                    result.data?.let { _data ->
+                        createHeadersAndUpdateTheRV(_data)
                         binding.fetch.visibility = View.GONE
                         binding.reason.visibility = View.GONE
                         binding.error.visibility = View.GONE
@@ -78,6 +59,21 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun createHeadersAndUpdateTheRV(_data: ArrayList<HiringResponse>) {
+        list.clear()
+        for (index in _data.indices) {
+            if (index == 0 ||
+                _data.elementAt(index).listId != _data.elementAt(
+                    index - 1
+                ).listId
+            ) {
+                list.add(HeaderItem(_data[index].listId))
+            }
+            list.add(_data[index])
+        }
+        hiringAdapter.notifyDataSetChanged()
+    }
+
     private fun initView() {
         hiringAdapter = HiringAdapter(list)
         binding.hiringRecyclerView.apply {
@@ -85,6 +81,9 @@ class MainActivity : AppCompatActivity() {
             adapter = hiringAdapter
         }
         viewModel.fetchData()
+        binding.reverseList.setOnClickListener {
+            viewModel.reverseData()
+        }
     }
 
     override fun onDestroy() {

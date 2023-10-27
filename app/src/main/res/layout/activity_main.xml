@@ -7,6 +7,13 @@
     android:orientation="vertical"
     tools:context=".ui.MainActivity">
 
+    <Button
+        android:id="@+id/reverseList"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:layout_margin="20dp"
+        android:text="Reverse"/>
+
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">

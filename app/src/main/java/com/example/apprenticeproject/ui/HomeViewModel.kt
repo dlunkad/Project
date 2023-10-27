@@ -18,13 +18,41 @@ constructor(
     private val homeRepository: HomeRepository
 ) : ViewModel() {
 
-    private val _dataState: MutableStateFlow<NetworkResult<ArrayList<HiringResponse>>> = MutableStateFlow(NetworkResult.Loading())
+    private val _dataState: MutableStateFlow<NetworkResult<ArrayList<HiringResponse>>> =
+        MutableStateFlow(NetworkResult.Loading())
     val dataState: LiveData<NetworkResult<ArrayList<HiringResponse>>> = _dataState.asLiveData()
 
     fun fetchData() {
         viewModelScope.launch {
             homeRepository.getData().collect { result ->
-                _dataState.value = result
+                when (result) {
+                    is NetworkResult.Success -> {
+                        var filteredData =
+                            result.data?.filter { !it.name.isNullOrBlank() }?.sortedWith(
+                                compareBy(
+                                    { it.listId },
+                                    { it.name?.substringAfter("Item ")?.toInt() },
+//                                    { it.name }, // In case we want ordering in string format we can use this instead
+                                )
+                            )
+                        filteredData?.let {
+                            _dataState.value = NetworkResult.Success(ArrayList(it))
+                        }
+                    }
+                    else -> {
+                        _dataState.value = result
+                    }
+                }
+            }
+        }
+    }
+
+    fun reverseData() {
+        viewModelScope.launch {
+            val list = _dataState.value.data
+            list?.let {
+                it.reverse()
+                _dataState.value = NetworkResult.Success(it)
             }
         }
     }
